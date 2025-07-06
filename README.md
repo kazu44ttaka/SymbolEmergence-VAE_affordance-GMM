@@ -1,149 +1,101 @@
-# Emergent Communication through Metropolis-Hastings Naming Game with Deep Generative Models
-- Refer to the following paper: [Advanced Robotics 2023 - Emergent Communication through Metropolis-Hastings Naming Game with Deep Generative Models](https://www.tandfonline.com/doi/full/10.1080/01691864.2023.2260856) by [Taniguchi Tadahiro](https://scholar.google.co.jp/citations?user=dPOCLQEAAAAJ&hl=ja&oi=sra), Yuto Yoshida, Akira Taniguchi, Yoshinobu Hagiwara.  
-- The proposed model in the paper, Inter-GMM+VAE, is implemented in Pytorch.  
-
-# Symbol Emergence-VAE-GMM (Inter-GMM+VAE)
-Naming game with probabilistic inference between agents represented by VAE and GMM.  
-
-Model (Inter-GMM-VAE) Overview.  
-Each agent is represented by a VAE and a GMM.  
-Agents reason in terms of naming probabilistic inferences based on the Metropolis Hastings algorithm.    
-<div>
-<img src='/image/se_vaegmm.png' width="400px">
-<img src='/image/define.png' width="400px">
-</div>
-
----
-**The objective of the naming game is to match the variables (w^A, w^B) of both agents**  
-Agents play the naming game in the following sequence：  
-1. Estimation of latent variables (z^A, z^B) by VAE：Agents A and B estimate a latent variable (z^A, z^B) that follows a multivariate normal distribution from image observations. This is done by the VAE within the agent. 
-2. Agent A is the speaker：Agent A clusters variables (z^A), estimates discrete variables (w^A) following a categorical distribution, and proposes them to Agent B.
-3. Agent B is the listener：Agent B decides whether to accept or reject the variable (z^B) proposed by Agent A using the Metropolis Hastings method.
-4. Swap the speaker and listener：The Metropolis Hastings algorithm is executed with Agent B as the speaker and Agent A as the listener.
-5. Knowledge Update：The agent updates the parameters of the multivariate normal distribution.
-The updated parameters are then redefined as the parameters of the VAE prior distribution and return to 1.  
-
----
-What this repo contains:
-- `main.py`: Main code for training model. Outputs ARI and Kappa coefficients.
-- `cnn_vae_module_mnist.py`: A training program for VAE, running in main.py.
-- `recall_image.py`: Recall the image to the agent.
-- `tool.py`: Various functions handled in the program.
-
-# How to run
-You can train model by running `main.py`.  
-```bash
- $ python main.py # Communication (Metropolis Hastings algorithm) 
-
- $ python main.py --mode 0 # No Communication 
-
- $ python main.py --mode 1 # All Acceptance 
-```
-- Communication：Playing the naming game with probabilistic inference based on the Metropolis-Hastings algorithm. Acceptance and rejection of the speaker's utterance under the Metropolis Hastings algorithm.  
-- No communication：Both agents do inference independently.  
-- All Acceptance：Both agents accept all of each other's utterances. No rejection based on Metropolis Hastings method.  
-# Sample output
-
-```
- $ python3 main.py 
-
-CUDA True
-Dataset : MNIST
-Total data:10000, Category:10
-VAE_iter:50, Batch_size:10
-MH_iter:50, MH_mode:-1(-1:Com 0:No-com 1:All accept)
-------------------Mutual learning session 0 begins------------------
-VAE_Agent A Training Start(0): Epoch:50, Batch_size:10
-====> Epoch: 1 Average loss: 168.2284
-====> Epoch: 25 Average loss: 98.9265
-====> Epoch: 50 Average loss: 92.6812
-VAE_Agent B Training Start(0): Epoch:50, Batch_size:10
-====> Epoch: 1 Average loss: 160.5718
-====> Epoch: 25 Average loss: 98.2610
-====> Epoch: 50 Average loss: 91.9621
-M-H algorithm Start(0): Epoch:50
-=> Epoch: 1, ARI_A: 0.023, ARI_B: 0.015, Kappa:0.422, A2B:5523, B2A:2410
-=> Epoch: 10, ARI_A: 0.41, ARI_B: 0.387, Kappa:0.853, A2B:8585, B2A:8743
-=> Epoch: 20, ARI_A: 0.665, ARI_B: 0.66, Kappa:0.915, A2B:8990, B2A:9128
-=> Epoch: 30, ARI_A: 0.735, ARI_B: 0.736, Kappa:0.933, A2B:9168, B2A:9289
-=> Epoch: 40, ARI_A: 0.779, ARI_B: 0.783, Kappa:0.945, A2B:9212, B2A:9284
-=> Epoch: 50, ARI_A: 0.803, ARI_B: 0.808, Kappa:0.95, A2B:9278, B2A:9390
-Iteration:0 Done:max_ARI_A: 0.803, max_ARI_B: 0.808, max_Kappa:0.95
-```
-About the evaluation index:
-- `ARI_A`: ARI of Agent A：The degree of agreement between agent A's sign variable w^A and the true MNIST label．  
-- `ARI_B`: ARI of Agent B：The degree of agreement between agent B's sign variable w^B and the true MNIST label．  
-- `Kappa`: Kappa coefficients：The degree of agreement of the sine variables w^A and w^B between agents．  
-- `A2B`: When speaker A and listener B, the number of times B accepted the sign proposed by A.  
-- `B2A`: When speaker B and listener A, the number of times A accepted the sign proposed by B.  
-※ARI tends to be low if batch size is increased too much  
-
-# Recalled image by Agents
-Agents can recall the image after the naming game is over.  
-Image recall uses the mean parameters estimated by the GMM for the latent variables in the VAE within the agent.  
-This mean parameter is input to the VAE decoder to generate the image.  
-
-After the naming game by `main.py` is finished, run `recall_image.py`.  
-Recall image of Agent A in `/model/debug/reconA/`：
-<div>
-<img src='/image/recall_A.png' width="400px">
-</div>
-
-Recall image of Agent B in `/model/debug/reconB/`：
-<div>
-<img src='/image/recall_B.png' width="400px">
-</div>
-Communication between agents shows that the objects in the recalled image are shared.  
-
-
-
-----
-# 変分オートエンコーダを活用した実画像からの記号創発
-VAEとGMMによって表現されるエージェント間の確率的推論によるネーミングゲームにより，両エージェントの記号を共有することを目的とします．
+# アフォーダンス特徴予測を併用した記号創発
+VAEにアフォーダンス特徴を予測するヘッドを追加することで潜在変数にアフォーダンス特徴を反映し、それに基づいたメトロポリスヘイスティングス名づけゲームによる記号創発を検証する。
 
 リポジトリのプログラムについて:
 - `main.py`: メインプログラム．エージェント間でネーミングゲームを行います．
-- `cnn_vae_module_mnist.py`: main.py内でVAEの学習を行わせるプログラム．
-- `recall_image.py`: 学習後のエージェントに画像の想起を行わせるプログラム．
+- `cnn_vae_module_affordance.py`: main.py内でVAEの学習を行わせるプログラム．
+- `create_single_object_dataset.py`, `create_simple_dataset.py`: データセットを作成するプログラム.
+- `recall_image_affordance.py`: 学習後のエージェントに画像の想起とアフォーダンスの予測を行わせるプログラム．
 - `tool.py`: 様々な関数が格納されたプログラム.
-  
-[本リポジトリは2022年度人工知能学会全国大会で発表したものとなります](https://www.jstage.jst.go.jp/article/pjsai/JSAI2022/0/JSAI2022_3L3GS802/_article/-char/ja/)
+
+本レポジトリは以下のレポジトリを改変して作成されました。
+
+https://github.com/is0383kk/SymbolEmergence-VAE-GMM
+
+# Requirements
+- uv
+
+# データセット
+データセットは[IIT-AFF Dataset](https://sites.google.com/site/iitaffdataset/)を使用しています。リンクからzipファイルをダウンロードし、レポジトリ上に解凍してください。
+
+その後`create_single_object_dataset.py`を実行すると、データセットに含まれる画像のうち単一オブジェクトのみを含む画像を抽出することができます。
+
+特定のクラスのみに対して実験を行いたい場合は`create_simple_dataset.py`でそのクラスのみを含むデータセットを作成することができます。また、各クラスに属する画像の最大枚数を決めることもできます。その際にはResNet152を用いた特徴量抽出によって類似度が高い上位N枚の画像が抽出されます。
 
 # 実行方法
 `main.py`を実行することで確率的推論によるネーミングゲームを行います．
-```bash
- $ python main.py # コミュニケーションモデル：メトロポリスヘイスティングス法によるネーミングゲームを行うモデル
 
- $ python main.py --mode 0 # ノンコミュニケーションモデル：個々のエージェントが独立して推論を行うモデル
-
- $ python main.py --mode 1 # All Acceptance model：コミュニケーションを行いますが発話者の提案を聞き手が全て受容してしまうモデル
-```
 # 出力例
 ```
  $ python3 main.py 
 
 CUDA True
-Dataset : MNIST
-Total data:10000, Category:10
-VAE_iter:50, Batch_size:10
-MH_iter:50, MH_mode:-1(-1:Com 0:No-com 1:All accept)
+Results will be saved in: ./model\affordances_bs64_vae50_mh50_cat5_mode-1_aw1.0_simple_dataset
+Configuration saved to: ./model\affordances_bs64_vae50_mh50_cat5_mode-1_aw1.0_simple_dataset\config.txt
+Dataset: IIT Affordances
+Total number of samples: 2384
+Train size: 1907, Validation size: 477
+Category: 5
+VAE_iter: 50, Batch_size: 64
+MH_iter: 50, MH_mode: -1(-1:Com 0:No-com 1:All accept)
 ------------------Mutual learning session 0 begins------------------
-VAE_Agent A Training Start(0): Epoch:50, Batch_size:10
-====> Epoch: 1 Average loss: 168.2284
-====> Epoch: 25 Average loss: 98.9265
-====> Epoch: 50 Average loss: 92.6812
-VAE_Agent B Training Start(0): Epoch:50, Batch_size:10
-====> Epoch: 1 Average loss: 160.5718
-====> Epoch: 25 Average loss: 98.2610
-====> Epoch: 50 Average loss: 91.9621
+====> Epoch: 1
+Total Loss: 8007.9282     
+Image Loss: 1110.0923     
+Affordance Loss: 6862.5572
+KL Loss: 35.2787
+Mean-IoU: 0.1305
+====> Epoch: 25
+Total Loss: 1371.5478
+Image Loss: 373.2783
+Affordance Loss: 912.5022
+KL Loss: 85.7673
+Mean-IoU: 0.6207
+====> Epoch: 50
+Total Loss: 934.6113
+Image Loss: 299.8477
+Affordance Loss: 548.9367
+KL Loss: 85.8268
+Mean-IoU: 0.6726
+Final Mean-IoU: 0.6353
+====> Epoch: 1
+Total Loss: 9222.4276
+Image Loss: 1104.3040
+Affordance Loss: 8101.9288
+KL Loss: 16.1948
+Mean-IoU: 0.1113
+====> Epoch: 25
+Total Loss: 1296.2485
+Image Loss: 374.4188
+Affordance Loss: 838.4851
+KL Loss: 83.3446
+Mean-IoU: 0.6336
+====> Epoch: 50
+Total Loss: 1034.3539
+Image Loss: 341.6952
+Affordance Loss: 607.7255
+KL Loss: 84.9332
+Mean-IoU: 0.6645
+Final Mean-IoU: 0.6519
+データセットに含まれるカテゴリ: [0 1 2 5 9]
+利用可能なカテゴリ: {0: 'bowl', 1: 'tvm', 2: 'pan', 5: 'cup', 9: 'bottle'}
+t-SNEによる可視化を実行中...
+PCAによる可視化を実行中...
+データセットに含まれるカテゴリ: [0 1 2 5 9]
+利用可能なカテゴリ: {0: 'bowl', 1: 'tvm', 2: 'pan', 5: 'cup', 9: 'bottle'}
+t-SNEによる可視化を実行中...
+PCAによる可視化を実行中...
 M-H algorithm Start(0): Epoch:50
-=> Epoch: 1, ARI_A: 0.023, ARI_B: 0.015, Kappa:0.422, A2B:5523, B2A:2410
-=> Epoch: 10, ARI_A: 0.41, ARI_B: 0.387, Kappa:0.853, A2B:8585, B2A:8743
-=> Epoch: 20, ARI_A: 0.665, ARI_B: 0.66, Kappa:0.915, A2B:8990, B2A:9128
-=> Epoch: 30, ARI_A: 0.735, ARI_B: 0.736, Kappa:0.933, A2B:9168, B2A:9289
-=> Epoch: 40, ARI_A: 0.779, ARI_B: 0.783, Kappa:0.945, A2B:9212, B2A:9284
-=> Epoch: 50, ARI_A: 0.803, ARI_B: 0.808, Kappa:0.95, A2B:9278, B2A:9390
-Iteration:0 Done:max_ARI_A: 0.803, max_ARI_B: 0.808, max_Kappa:0.95
+=> Epoch: 1, ARI_A: 0.021, ARI_B: 0.009, Kappa:0.425, A2B:1200, B2A:972
+=> Epoch: 10, ARI_A: 0.26, ARI_B: 0.275, Kappa:0.823, A2B:1520, B2A:1576
+=> Epoch: 20, ARI_A: 0.27, ARI_B: 0.277, Kappa:0.874, A2B:1621, B2A:1681
+=> Epoch: 30, ARI_A: 0.244, ARI_B: 0.254, Kappa:0.86, A2B:1595, B2A:1681
+=> Epoch: 40, ARI_A: 0.258, ARI_B: 0.263, Kappa:0.868, A2B:1623, B2A:1669
+Final Epoch 50: Analyzing class difficulty (ARI_A: 0.251, ARI_B: 0.249)...
+Agent A - Most difficult classes: [0, 1, 3]
+Agent B - Most difficult classes: [0, 1, 3]
+=> Epoch: 50, ARI_A: 0.251, ARI_B: 0.249, Kappa:0.867, A2B:1649, B2A:1676
+Iteration:0 Done: max_ARI_A: 0.274, max_ARI_B: 0.281, max_Kappa:0.892
 ```
 評価値について:
 - `ARI_A`: エージェントAのARI：エージェントAのサイン変数 w^A と真のMNISTラベルとの一致度合いを表す．
@@ -152,21 +104,14 @@ Iteration:0 Done:max_ARI_A: 0.803, max_ARI_B: 0.808, max_Kappa:0.95
 - `A2B`: 発話者A・聞き手Bのとき，Aが提案したサインをBが受容した回数.
 - `B2A`: 発話者B・聞き手Aのとき，Bが提案したサインをAが受容した回数.
 
-# エージェントによる画像の想起
-ネーミングゲームの終了後にエージェントは画像の想起を行うことができます.  
+# エージェントによる画像の想起とアフォーダンス予測
+ネーミングゲームの終了後にエージェントは画像の想起とそのアフォーダンスの予測を行うことができます.  
 エージェントによる画像の想起では，エージェント内のVAEが推論した潜在変数に対してGMMが推定した平均パラメータを用います.  
-この平均パラメータをVAEデコーダに入力することで画像を再構成しエージェントに画像を想起させます.  
+この平均パラメータをVAEデコーダに入力することで画像を再構成しエージェントに画像を想起させ、さらにそのアフォーダンスを予測させることができます。
   
-  
-`main.py`によるネーミングゲーム終了後，`recall_image.py`を実行してください．
+`main.py`によるネーミングゲーム終了後，`recall_image_affordance.py`を実行してください．
 
-Recall image of Agent A in `/model/debug/reconA/`：
+Recall image and affordance：
 <div>
-<img src='/image/recall_A.png' width="400px">
+<img src='image/concat_image_affordance.png' width="400px">
 </div>
-
-Recall image of Agent B in `/model/debug/reconB/`：
-<div>
-<img src='/image/recall_B.png' width="400px">
-</div>
-コミュニケーションを行ったモデルではエージェントの想起画像が共有されていることがわかります.  

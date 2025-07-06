@@ -12,3 +12,6 @@ debug_program/*npy
 debug_program/*jpg
 *zip
 train_test*
+IIT_Affordances_2017/
+simple_dataset/
+single_object_dataset/

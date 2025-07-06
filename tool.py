@@ -29,7 +29,11 @@ def sample(iteration, z_dim, mu_gmm, lambda_gmm, sigma, sample_num, sample_k, mo
 
 def visualize_gmm(iteration, sigma, K, decode_k, sample_num, manual, model_dir, agent):
     mu_gmm_kd, lambda_gmm_kdd, pi_gmm_k = get_param(iteration=iteration, model_dir=model_dir, agent=agent)
-    sample_d, random_sample = sample(iteration=iteration, z_dim=12, 
+    
+    # 潜在変数の次元を動的に取得
+    z_dim = mu_gmm_kd.shape[1]
+    
+    sample_d, random_sample = sample(iteration=iteration, z_dim=z_dim, 
                                      mu_gmm=mu_gmm_kd, lambda_gmm=lambda_gmm_kdd, sigma=sigma, 
                                      sample_k=decode_k, sample_num=sample_num, model_dir=model_dir
                                     )
@@ -62,10 +66,10 @@ def visualize_gmm(iteration, sigma, K, decode_k, sample_num, manual, model_dir, 
     res_density_k += tmp_density_k * pi_gmm_k[0]
 
     annotations_x = [str(n) for n in list(range(sample_num))]
-    annotations_k = ["K=0","K=1","K=2","K=3","K=4","K=5","K=6","K=7","K=8","K=9"]
+    annotations_k = [f"K={i}" for i in range(K)]
 
     plt.figure(figsize=(12, 9))
-    plt.scatter(x=sample_d[:, 0], y=sample_d[:, 1], label='cluster:' + str(k + 1)) # 観測データ
+    plt.scatter(x=sample_d[:, 0], y=sample_d[:, 1], label='cluster:' + str(decode_k + 1)) # 観測データ
     plt.scatter(x=mu_gmm2d_kd[:, 0], y=mu_gmm2d_kd[:, 1], color='red', s=100, marker='x') # 事後分布の平均
     plt.contour(x_1_grid, x_2_grid, res_density_k.reshape(x_dim), alpha=0.5, linestyles='dashed') # K=0の等高線
     #plt.contour(x_1_grid, x_2_grid, true_model.reshape(x_dim), linestyles='--') # 真の分布
@@ -89,8 +93,10 @@ def visualize_gmm(iteration, sigma, K, decode_k, sample_num, manual, model_dir, 
 def get_param(iteration, model_dir, agent):
     mu_gmm_kd = np.load(model_dir+"/npy/mu"+agent+"_"+str(iteration)+".npy") # load mean param from .npy
     lambda_gmm_kdd = np.load(model_dir+"/npy/lambda"+agent+"_"+str(iteration)+".npy") # load lambda param from .npy
-    #pi_gmm_k = np.load(model_dir+"/pi_"+str(iteration)+".npy") # GMMの混合比
-    pi_gmm_k = np.full(10,0.1)
+    
+    # カテゴリ数を動的に取得
+    K = mu_gmm_kd.shape[0]
+    pi_gmm_k = np.full(K, 1.0/K)  # 均等な混合比
 
     return mu_gmm_kd, lambda_gmm_kdd, pi_gmm_k
 
