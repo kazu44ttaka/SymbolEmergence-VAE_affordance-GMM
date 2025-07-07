@@ -15,3 +15,5 @@ train_test*
 IIT_Affordances_2017/
 simple_dataset/
 single_object_dataset/
+.python-version
+uv.lock
